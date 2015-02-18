@@ -26,12 +26,14 @@ SET(common_SRCS
   tif_next.c
   tif_open.c
   tif_packbits.c
+  tif_pixarlog.c
   tif_predict.c
   tif_print.c
   tif_read.c
   tif_strip.c
   tif_swab.c
   tif_tile.c
+  tif_thunder.c  
   tif_version.c
   tif_warning.c
   tif_write.c
