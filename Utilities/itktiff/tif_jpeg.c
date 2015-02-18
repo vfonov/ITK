@@ -85,7 +85,8 @@ int TIFFReInitJPEG_12( TIFF *tif, int scheme, int is_encode );
 # define HAVE_BOOLEAN            /* prevent jmorecfg.h from redefining it */
 #endif
 
-#include "itk_jpeg.h"
+#include "itkjpeg/8/jpeglib.h"
+#include "itkjpeg/8/jerror.h"
 
 /*
  * Do we want to do special processing suitable for when JSAMPLE is a

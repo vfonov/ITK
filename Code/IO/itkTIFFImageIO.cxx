@@ -27,7 +27,6 @@
 #include <string.h>
 
 #include <sys/stat.h>
-
 #include "itk_tiff.h"
 
 namespace itk
@@ -66,6 +65,22 @@ public:
   float             m_YResolution;
   short             m_SampleFormat;
 };
+
+// With the TIFF 4.0 (aka bigtiff ) interface the tiff field structure
+// was renamed and became an opaque type requiring function to
+// access. The follow are some macros for portable access.
+#ifdef TIFF_INT64_T // detect if libtiff4
+#define itkTIFFFieldReadCount( TIFFField ) TIFFFieldReadCount( TIFFField )
+#define itkTIFFFieldPassCount( TIFFField ) TIFFFieldPassCount( TIFFField )
+#define itkTIFFFieldDataType( TIFFField )  TIFFFieldDataType( TIFFField )
+#define itkTIFFField TIFFField
+#else
+#define itkTIFFFieldReadCount( TIFFFieldInfo ) ((TIFFFieldInfo)->field_readcount)
+#define itkTIFFFieldPassCount( TIFFFieldInfo ) ((TIFFFieldInfo)->field_passcount)
+#define itkTIFFFieldDataType( TIFFFieldInfo ) ((TIFFFieldInfo)->field_type)
+#define itkTIFFField TIFFFieldInfo
+#endif
+
 
 int TIFFReaderInternal::Open( const char *filename )
 {
@@ -1856,6 +1871,7 @@ void TIFFImageIO::InternalWrite(const void* buffer)
   TIFFClose(tif);
 }
 
+
 bool TIFFImageIO::CanFindTIFFTag( unsigned int t )
 {
   // m_InternalImage needs to be valid
@@ -1866,7 +1882,7 @@ bool TIFFImageIO::CanFindTIFFTag( unsigned int t )
     }
 
   ttag_t tag = t; // 32bits integer
-  const TIFFFieldInfo *fld = TIFFFieldWithTag( m_InternalImage->m_Image, tag );
+  const itkTIFFField *fld = TIFFFieldWithTag( m_InternalImage->m_Image, tag );
   if( fld == NULL )
     {
     return false;
@@ -1884,7 +1900,7 @@ void *TIFFImageIO::ReadRawByteFromTag( unsigned int t, short &value_count )
     }
   ttag_t tag = t;
   void *raw_data = NULL;
-  const TIFFFieldInfo *fld = TIFFFieldWithTag( m_InternalImage->m_Image, tag );
+  const itkTIFFField *fld = TIFFFieldWithTag( m_InternalImage->m_Image, tag );
   if( fld == NULL )
     {
     itkExceptionMacro( << "fld is NULL" );
@@ -1892,7 +1908,7 @@ void *TIFFImageIO::ReadRawByteFromTag( unsigned int t, short &value_count )
     }
   else
     {
-    if( fld->field_passcount )
+    if( itkTIFFFieldPassCount( fld ) )
       {
       if( TIFFGetField( m_InternalImage->m_Image, tag, &value_count, &raw_data ) != 1 )
         {
@@ -1901,7 +1917,7 @@ void *TIFFImageIO::ReadRawByteFromTag( unsigned int t, short &value_count )
         }
       else
         {
-        if( fld->field_type != TIFF_BYTE )
+        if( itkTIFFFieldReadCount( fld ) != TIFF_BYTE )
           {
           itkExceptionMacro( << "Tag is not of type TIFF_BYTE" );
           return NULL;
