@@ -33,6 +33,8 @@
 
 #include "ITKIOMINCExport.h"
 
+#include "itk_minc2_config.h"
+
 namespace itk
 {
 
@@ -122,6 +124,11 @@ public:
   void
   Write(const void * buffer) override;
 
+  /** A mode to allow the MINC filter to convert coordinate system from RAS to LPS
+   */
+  itkSetMacro(ConvertCoordinatesToLPS, MINCIOEnums::MINCIOCoordinateFIX);
+  itkGetConstMacro(ConvertCoordinatesToLPS, MINCIOEnums::MINCIOCoordinateFIX);
+
 protected:
   MINCImageIO();
   ~MINCImageIO() override;
@@ -148,11 +155,17 @@ protected:
 private:
   MINCImageIOPImpl * m_MINCPImpl;
 
-  MatrixType m_DirectionCosines;
+  MINCIOEnums::MINCIOCoordinateFIX m_ConvertCoordinatesToLPS;
 
+  MatrixType m_DirectionCosines;
   // complex type images, composed of complex numbers
   // int m_Complex;
 };
+
+  /** Define how to print enumerations */
+  extern ITKIOMINC_EXPORT std::ostream &
+                          operator<<(std::ostream & out, const MINCIOEnums::MINCIOCoordinateFIX value);
+
 } // end namespace itk
 
 #endif // itkMINCImageIO_h

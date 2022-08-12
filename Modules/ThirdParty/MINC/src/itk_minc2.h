@@ -29,12 +29,7 @@
 #ifndef itk_minc2_h
 #define itk_minc2_h
 
-/* Use the LIBMINC library configured for ITK.  */
-#cmakedefine ITK_USE_SYSTEM_MINC
-
-#ifndef HAVE_MINC1
-#cmakedefine HAVE_MINC1
-#endif /*HAVE_MINC1*/
+#include "itk_minc2_config.h"
 
 #ifdef ITK_USE_SYSTEM_MINC
 # include <minc2.h>

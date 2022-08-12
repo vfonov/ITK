@@ -57,11 +57,12 @@ else()
   endif()
 endif()
 
-configure_file(src/itk_minc2.h.in ${ITKMINC_BINARY_DIR}/itk_minc2.h)
+configure_file(src/itk_minc2_config.h.in ${ITKMINC_BINARY_DIR}/itk_minc2_config.h)
+file(COPY src/itk_minc2.h DESTINATION ${ITKMINC_BINARY_DIR})
 
 itk_module_impl()
 
-install(FILES ${ITKMINC_BINARY_DIR}/itk_minc2.h
+install(FILES src/itk_minc2.h ${ITKMINC_BINARY_DIR}/itk_minc2_config.h
   DESTINATION ${ITKMINC_INSTALL_INCLUDE_DIR}
   COMPONENT Development
   )

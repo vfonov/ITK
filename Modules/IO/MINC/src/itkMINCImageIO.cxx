@@ -210,7 +210,8 @@ MINCImageIO::CloseVolume()
 }
 
 MINCImageIO::MINCImageIO()
-  : m_MINCPImpl(new MINCImageIOPImpl)
+  : m_MINCPImpl(new MINCImageIOPImpl),
+    m_ConvertCoordinatesToLPS(ITK_MINC_IO_COORDINATE_FIX_DEFAULT)
 {
   this->m_MINCPImpl->m_NDims = 0;
   this->m_MINCPImpl->m_DimensionName = nullptr;
@@ -269,6 +270,7 @@ MINCImageIO::PrintSelf(std::ostream & os, Indent indent) const
 
   os << indent << "MINCPImpl: " << m_MINCPImpl << std::endl;
   os << indent << "DirectionCosines: " << m_DirectionCosines << std::endl;
+  os << indent << "ConvertCoordinates: " << m_ConvertCoordinatesToLPS << std::endl;
 }
 
 void
@@ -451,6 +453,12 @@ MINCImageIO::ReadImageInformation()
   dir_cos.Fill(0.0);
   dir_cos.SetIdentity();
 
+  //MINC stores direction cosines in RAS, need to convert to LPS for ITK
+  Matrix< double, 3,3 > RAS_tofrom_LPS;
+  RAS_tofrom_LPS.SetIdentity();
+  RAS_tofrom_LPS(0,0) = -1.0;
+  RAS_tofrom_LPS(1,1) = -1.0;
+
   Vector<double, 3> origin, sep;
   Vector<double, 3> o_origin;
   origin.Fill(0.0);
@@ -485,7 +493,7 @@ MINCImageIO::ReadImageInformation()
       sep[i - 1] = _sep;
 
       this->SetDimensions(i - 1, static_cast<unsigned int>(_sz));
-      this->SetDirection(i - 1, _dir);
+      //this->SetDirection(i - 1, _dir);
       this->SetSpacing(i - 1, _sep);
 
       ++spatial_dimension;
@@ -526,10 +534,21 @@ MINCImageIO::ReadImageInformation()
     itkExceptionMacro(<< " Can't set apparent dimension order!");
   }
 
+  if(this->m_ConvertCoordinatesToLPS==MINCIOEnums::MINCIOCoordinateFIX::MINCIOCoordinateRASToLPS)
+    dir_cos = RAS_tofrom_LPS*dir_cos;
+
   o_origin = dir_cos * origin;
 
   for (int i = 0; i < spatial_dimension_count; ++i)
+  {
+    std::vector< double > _dir(3);
     this->SetOrigin(i, o_origin[i]);
+    for( unsigned int j=0; j<3; j++ )
+      {
+        _dir[j] = dir_cos[j][i];
+      }
+    this->SetDirection(i , _dir);
+  }
 
   miclass_t volume_data_class;
 
@@ -598,11 +617,6 @@ MINCImageIO::ReadImageInformation()
       case MI_TYPE_FCOMPLEX:
         this->SetComponentType(IOComponentEnum::FLOAT);
         break;
-      case MI_TYPE_DCOMPLEX:
-        this->SetComponentType(IOComponentEnum::DOUBLE);
-        break;
-      default:
-        itkExceptionMacro(<< "Bad data type ");
     } // end of switch
   }
 
@@ -963,6 +977,12 @@ MINCImageIO::WriteImageInformation()
   dircosmatrix.set_identity();
   vnl_vector<double> origin(nDims);
 
+  //MINC stores direction cosines in RAS, need to convert to LPS for ITK
+  vnl_matrix< double > RAS_tofrom_LPS(nDims, nDims);
+  RAS_tofrom_LPS.set_identity();
+  RAS_tofrom_LPS(0,0) = -1.0;
+  RAS_tofrom_LPS(1,1) = -1.0;
+
   for (unsigned int i = 0; i < nDims; ++i)
   {
     for (unsigned int j = 0; j < nDims; ++j)
@@ -971,6 +991,9 @@ MINCImageIO::WriteImageInformation()
     }
     origin[i] = this->GetOrigin(i);
   }
+
+  if(this->m_ConvertCoordinatesToLPS==MINCIOEnums::MINCIOCoordinateFIX::MINCIOCoordinateRASToLPS)
+    dircosmatrix *= RAS_tofrom_LPS;
 
   const vnl_matrix<double> inverseDirectionCosines{ vnl_matrix_inverse<double>(dircosmatrix).as_matrix() };
   origin *= inverseDirectionCosines; // transform to minc convention
@@ -1024,18 +1047,6 @@ MINCImageIO::WriteImageInformation()
     case IOComponentEnum::INT:
       this->m_MINCPImpl->m_Volume_type = MI_TYPE_INT;
       // this->m_MINCPImpl->m_Volume_class=MI_CLASS_INT;
-      break;
-      //     case IOComponentEnum::ULONG://TODO: make sure we are cross-platform here!
-      //       volume_data_type=MI_TYPE_ULONG;
-      //       break;
-      //     case IOComponentEnum::LONG://TODO: make sure we are cross-platform here!
-      //       volume_data_type=MI_TYPE_LONG;
-      //       break;
-    case IOComponentEnum::FLOAT: // TODO: make sure we are cross-platform here!
-      this->m_MINCPImpl->m_Volume_type = MI_TYPE_FLOAT;
-      break;
-    case IOComponentEnum::DOUBLE: // TODO: make sure we are cross-platform here!
-      this->m_MINCPImpl->m_Volume_type = MI_TYPE_DOUBLE;
       break;
     default:
       itkExceptionMacro(<< "Could read datatype " << this->GetComponentType());
@@ -1435,6 +1446,23 @@ MINCImageIO::Write(const void * buffer)
 
   delete[] start;
   delete[] count;
+}
+
+
+std::ostream &
+operator<<(std::ostream & out, const MINCIOEnums::MINCIOCoordinateFIX value)
+{
+  return out << [value] {
+    switch (value)
+    {
+      case MINCIOEnums::MINCIOCoordinateFIX::MINCIOCoordinateLegacy:
+        return "MINCIOEnums::MINCIOCoordinateFIX::MINCIOCoordinateLegacy";
+      case MINCIOEnums::MINCIOCoordinateFIX::MINCIOCoordinateRASToLPS:
+        return "MINCIOEnums::MINCIOCoordinateFIX::MINCIOCoordinateRASToLPS";
+      default:
+        return "INVALID VALUE FOR itk::MINCIOEnums::MINCIOCoordinateFIX";
+    }
+  }();
 }
 
 } // end namespace itk
