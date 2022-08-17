@@ -10,6 +10,7 @@ itk_module(ITKIOMINC
   TEST_DEPENDS
     ITKTestKernel
     ITKImageStatistics
+    ITKMINC
   FACTORY_NAMES
     ImageIO::MINC
   DESCRIPTION

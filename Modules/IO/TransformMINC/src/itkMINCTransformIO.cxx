@@ -38,6 +38,7 @@ namespace itk
 
 template <typename TParametersValueType>
 MINCTransformIOTemplate<TParametersValueType>::MINCTransformIOTemplate()
+  : m_ConvertCoordinatesToLPS(ITK_MINC_IO_COORDINATE_FIX_DEFAULT)
 {
   m_XFM_initialized = false;
 }
@@ -72,6 +73,42 @@ MINCTransformIOTemplate<TParametersValueType>::CanWriteFile(const char * fileNam
   std::string ext(itksys::SystemTools::GetFilenameLastExtension(fileName));
   return (ext == ".xfm" || ext == ".XFM");
 }
+
+
+template <typename TParametersValueType>
+TransformPointer
+MINCTransformIOTemplate<TParametersValueType>::CreateRASToLPSTransform(void)
+{
+  TransformPointer  transform;
+  const std::string typeNameString = Superclass::GetTypeNameString();
+  std::string       transformTypeName = "AffineTransform_";
+  transformTypeName += typeNameString;
+  transformTypeName += "_3_3";
+
+  this->CreateTransform(transform, transformTypeName);
+  ParametersType parameterArray;
+  parameterArray.SetSize(12);
+
+  for (int j = 0; j < 3; ++j)
+  {
+    for (int i = 0; i < 3; ++i)
+    {
+      if (i != j)
+        parameterArray.SetElement(i + j * 3, 0.0);
+      else if (i == 0)
+        parameterArray.SetElement(i + j * 3, -1.0);
+      else if (i == 1)
+        parameterArray.SetElement(i + j * 3, -1.0);
+      else
+        parameterArray.SetElement(i + j * 3, 1.0);
+    }
+    parameterArray.SetElement(j + 9, 0.0);
+  }
+  transform->SetParametersByValue(parameterArray);
+  // this->GetReadTransformList().push_back(transform);
+  return transform;
+}
+
 
 template <typename TParametersValueType>
 void
@@ -186,7 +223,14 @@ MINCTransformIOTemplate<TParametersValueType>::Read()
   }
   this->m_XFM_initialized = true;
 
+  if (this->m_ConvertCoordinatesToLPS == MINCIOEnums::MINCIOCoordinateFIX::MINCIOCoordinateRASToLPS)
+    this->GetReadTransformList().push_back(this->CreateRASToLPSTransform());
+
   this->ReadOneTransform(&m_XFM);
+
+  // this transform is inverse of itself
+  if (this->m_ConvertCoordinatesToLPS == MINCIOEnums::MINCIOCoordinateFIX::MINCIOCoordinateRASToLPS)
+    this->GetReadTransformList().push_back(this->CreateRASToLPSTransform());
 
   _cleanup();
 }
@@ -319,9 +363,24 @@ MINCTransformIOTemplate<TParametersValueType>::Write()
 
   int count = 0;
   int serial = 0;
+
+  // Naive approach: prepend the inverse of RASToLPS
+  if (this->m_ConvertCoordinatesToLPS == MINCIOEnums::MINCIOCoordinateFIX::MINCIOCoordinateRASToLPS)
+  {
+    this->WriteOneTransform(count, this->CreateRASToLPSTransform(), xfm, xfm_file_base.c_str(), serial);
+    ++count;
+  }
+
   for (typename ConstTransformListType::const_iterator it = transformList.begin(); it != end; ++it, ++count)
   {
     this->WriteOneTransform(count, it->GetPointer(), xfm, xfm_file_base.c_str(), serial);
+  }
+
+  // Naive approach: append the RASToLPS
+  if (this->m_ConvertCoordinatesToLPS == MINCIOEnums::MINCIOCoordinateFIX::MINCIOCoordinateRASToLPS)
+  {
+    this->WriteOneTransform(count, this->CreateRASToLPSTransform(), xfm, xfm_file_base.c_str(), serial);
+    ++count;
   }
 
   VIO_General_transform transform = xfm.back();

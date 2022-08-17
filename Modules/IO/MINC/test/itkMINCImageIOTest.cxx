@@ -15,7 +15,6 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-
 #include "itkArray.h"
 #include "itkVectorImage.h"
 #include "itkMINCImageIO.h"
@@ -297,7 +296,11 @@ eql_vector_diff(const itk::Point<TPixel, 3> & v1, const itk::Point<TPixel, 3> & 
 // TODO: properly implement storage type in MINC2 IO
 template <typename TPixel, int VDimension>
 int
-MINCReadWriteTest(const char * fileName, const char * minc_storage_type, double tolerance = 0.0)
+MINCReadWriteTest(
+  const char *                          fileName,
+  const char *                          minc_storage_type,
+  double                                tolerance = 0.0,
+  itk::MINCIOEnums::MINCIOCoordinateFIX coord_fix = itk::MINCIOEnums::MINCIOCoordinateFIX::MINCIOCoordinateLegacy)
 {
   int success(EXIT_SUCCESS);
 
@@ -397,8 +400,13 @@ MINCReadWriteTest(const char * fileName, const char * minc_storage_type, double 
   typename ImageType::Pointer im2;
   try
   {
-    itk::IOTestHelper::WriteImage<ImageType, itk::MINCImageIO>(im, std::string(fileName));
-    im2 = itk::IOTestHelper::ReadImage<ImageType>(std::string(fileName));
+    itk::MINCImageIO::Pointer mincIO1 = itk::MINCImageIO::New();
+    mincIO1->SetConvertCoordinatesToLPS(coord_fix);
+    itk::IOTestHelper::WriteImage<ImageType, itk::MINCImageIO>(im, std::string(fileName), mincIO1);
+
+    itk::MINCImageIO::Pointer mincIO2 = itk::MINCImageIO::New();
+    mincIO2->SetConvertCoordinatesToLPS(coord_fix);
+    im2 = itk::IOTestHelper::ReadImage<ImageType>(std::string(fileName), false, mincIO2);
   }
   catch (const itk::ExceptionObject & err)
   {
@@ -546,10 +554,12 @@ MINCReadWriteTest(const char * fileName, const char * minc_storage_type, double 
 
 template <typename TPixel, int VDimension>
 int
-MINCReadWriteTestVector(const char * fileName,
-                        size_t       vector_length,
-                        const char * minc_storage_type,
-                        double       tolerance = 0.0)
+MINCReadWriteTestVector(
+  const char *                          fileName,
+  size_t                                vector_length,
+  const char *                          minc_storage_type,
+  double                                tolerance = 0.0,
+  itk::MINCIOEnums::MINCIOCoordinateFIX coord_fix = itk::MINCIOEnums::MINCIOCoordinateFIX::MINCIOCoordinateLegacy)
 {
   int success(EXIT_SUCCESS);
 
@@ -643,8 +653,15 @@ MINCReadWriteTestVector(const char * fileName,
 
   try
   {
-    itk::IOTestHelper::WriteImage<ImageType, itk::MINCImageIO>(im, std::string(fileName));
-    im2 = itk::IOTestHelper::ReadImage<ImageType>(std::string(fileName));
+    itk::MINCImageIO::Pointer mincIO1 = itk::MINCImageIO::New();
+    mincIO1->SetConvertCoordinatesToLPS(coord_fix);
+
+    itk::IOTestHelper::WriteImage<ImageType, itk::MINCImageIO>(im, std::string(fileName), mincIO1);
+
+    itk::MINCImageIO::Pointer mincIO2 = itk::MINCImageIO::New();
+    mincIO2->SetConvertCoordinatesToLPS(coord_fix);
+
+    im2 = itk::IOTestHelper::ReadImage<ImageType>(std::string(fileName), false, mincIO2);
   }
   catch (const itk::ExceptionObject & err)
   {
@@ -818,6 +835,18 @@ itkMINCImageIOTest(int argc, char * argv[])
 
   result += MINCReadWriteTestVector<double, 3>("4DDoubleImage_byte.mnc", 10, typeid(unsigned char).name(), 0.2);
   result += MINCReadWriteTestVector<double, 3>("4DDoubleImage_short.mnc", 10, typeid(short).name(), 0.01);
+
+  // test LPStoRAS conversion
+  result += MINCReadWriteTestVector<float, 3>("4DFloatImageLPStoRAS.mnc",
+                                              10,
+                                              typeid(float).name(),
+                                              0.0001,
+                                              itk::MINCIOEnums::MINCIOCoordinateFIX::MINCIOCoordinateRASToLPS);
+  result += MINCReadWriteTest<float, 3>("3DFloatImageLPStoRAS.mnc",
+                                        typeid(float).name(),
+                                        0.0,
+                                        itk::MINCIOEnums::MINCIOCoordinateFIX::MINCIOCoordinateRASToLPS);
+
 
   //   result += MINCReadWriteTest<unsigned char,4>("4DUCharImage.mnc",typeid(unsigned char).name(),0.5);
   //   result += MINCReadWriteTest<float,4>("4DFloatImage.mnc",typeid(float).name(),0.0001);

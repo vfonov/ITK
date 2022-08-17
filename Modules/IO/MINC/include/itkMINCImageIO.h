@@ -33,7 +33,7 @@
 
 #include "ITKIOMINCExport.h"
 
-#include "itk_minc2_config.h"
+#include <itk_minc2_config.h>
 
 namespace itk
 {
@@ -41,6 +41,10 @@ namespace itk
 // Structure for "Pointer to Implementation" or "Private
 // Implementation" to hide MINC data from the ITK interface.
 struct ITKIOMINC_HIDDEN MINCImageIOPImpl;
+
+/** Define how to print enumerations */
+extern ITKIOMINC_EXPORT std::ostream &
+                        operator<<(std::ostream & out, const MINCIOEnums::MINCIOCoordinateFIX value);
 
 /**
  *\class MINCImageIO
@@ -162,9 +166,6 @@ private:
   // int m_Complex;
 };
 
-  /** Define how to print enumerations */
-  extern ITKIOMINC_EXPORT std::ostream &
-                          operator<<(std::ostream & out, const MINCIOEnums::MINCIOCoordinateFIX value);
 
 } // end namespace itk
 

@@ -54,8 +54,13 @@ itkMINCImageIOTest2(int argc, char * argv[])
   }
 
   ITK_TEST_EXPECT_TRUE(!mincIO1->SupportsDimension(supportedDims.back() + 1));
+  // check that default correction mode is set
+  ITK_TEST_EXPECT_TRUE((mincIO1->GetConvertCoordinatesToLPS() == ITK_MINC_IO_COORDINATE_FIX_DEFAULT));
 
   itk::MINCImageIO::Pointer mincIO2 = itk::MINCImageIO::New();
+  // check that default correction mode is set
+  ITK_TEST_EXPECT_TRUE((mincIO2->GetConvertCoordinatesToLPS() == ITK_MINC_IO_COORDINATE_FIX_DEFAULT));
+
 
   using ReaderType = itk::ImageFileReader<ImageType>;
   using WriterType = itk::ImageFileWriter<ImageType>;

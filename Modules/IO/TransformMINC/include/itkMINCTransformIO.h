@@ -25,7 +25,9 @@
 #include <string>
 #include <vector>
 #include <itk_minc2.h>
+
 #include "itkMatrixOffsetTransformBase.h"
+#include "itkMINCImageIO.h"
 
 namespace itk
 {
@@ -80,12 +82,18 @@ public:
   void
   Write() override;
 
+  /** A mode to allow the MINC filter to convert coordinate system from RAS to LPS
+   */
+  itkSetMacro(ConvertCoordinatesToLPS, MINCIOEnums::MINCIOCoordinateFIX);
+  itkGetConstMacro(ConvertCoordinatesToLPS, MINCIOEnums::MINCIOCoordinateFIX);
+
 protected:
   MINCTransformIOTemplate();
   ~MINCTransformIOTemplate() override;
 
-  VIO_General_transform m_XFM;
-  bool                  m_XFM_initialized;
+  VIO_General_transform            m_XFM;
+  bool                             m_XFM_initialized;
+  MINCIOEnums::MINCIOCoordinateFIX m_ConvertCoordinatesToLPS;
 
 private:
   void
@@ -99,6 +107,9 @@ private:
 
   void
   ReadOneTransform(VIO_General_transform * xfm);
+
+  TransformPointer
+  CreateRASToLPSTransform();
 };
 
 /** This helps to meet backward compatibility */
