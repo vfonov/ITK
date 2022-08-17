@@ -381,6 +381,21 @@ if(NOT ("${ITK_NIFTI_IO_ANALYZE_FLAVOR}" STREQUAL "ITK4Warning" OR
 endif()
 mark_as_advanced(ITK_NIFTI_IO_ANALYZE_FLAVOR)
 
+# Chose flavour of MINC coordinate transform
+set(ITK_MINC_IO_COORDINATE_FIX_DOC_STRING "Convert MINC coordinate system from RAS to LPS by default")
+
+set(ITK_MINC_IO_COORDINATE_FIX "RASToLPS" CACHE STRING ${ITK_MINC_IO_COORDINATE_FIX_DOC_STRING})
+
+set_property(CACHE ITK_MINC_IO_COORDINATE_FIX PROPERTY STRINGS RASToLPS Legacy)
+
+if(NOT ("${ITK_MINC_IO_COORDINATE_FIX}" STREQUAL "RASToLPS" OR
+         "${ITK_MINC_IO_COORDINATE_FIX}" STREQUAL "Legacy"
+         ))
+  set(ITK_MINC_IO_COORDINATE_FIX "RASToLPS" CACHE STRING ${ITK_MINC_IO_COORDINATE_FIX_DOC_STRING} FORCE)
+endif()
+mark_as_advanced(ITK_MINC_IO_COORDINATE_FIX)
+
+
 
 #-----------------------------------------------------------------------------
 # ITK build classes that are in the review process
