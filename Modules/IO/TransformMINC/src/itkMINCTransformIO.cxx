@@ -76,7 +76,7 @@ MINCTransformIOTemplate<TParametersValueType>::CanWriteFile(const char * fileNam
 
 
 template <typename TParametersValueType>
-TransformPointer
+typename MINCTransformIOTemplate<TParametersValueType>::TransformPointer
 MINCTransformIOTemplate<TParametersValueType>::CreateRASToLPSTransform(void)
 {
   TransformPointer  transform;
@@ -253,10 +253,11 @@ MINCTransformIOTemplate<TParametersValueType>::WriteOneTransform(const int      
   // composite transform doesn't store own parameters
   if (transformType.find("CompositeTransform") != std::string::npos)
   {
-    if (transformIndex != 0)
-    {
-      itkExceptionMacro(<< "Composite Transform can only be 1st transform in a file");
-    }
+    // if (transformIndex != 0)
+    // {
+    //   itkExceptionMacro(<< "Composite Transform can only be 1st transform in a file");
+    // }
+    //skip over composite transform, it is supposed to be unrolled already
   }
   else
   {
@@ -373,7 +374,7 @@ MINCTransformIOTemplate<TParametersValueType>::Write()
 
   for (typename ConstTransformListType::const_iterator it = transformList.begin(); it != end; ++it, ++count)
   {
-    this->WriteOneTransform(count, it->GetPointer(), xfm, xfm_file_base.c_str(), serial);
+      this->WriteOneTransform(count, it->GetPointer(), xfm, xfm_file_base.c_str(), serial);
   }
 
   // Naive approach: append the RASToLPS

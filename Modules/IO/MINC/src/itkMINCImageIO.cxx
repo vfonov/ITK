@@ -1026,11 +1026,11 @@ MINCImageIO::WriteImageInformation()
     origin[i] = this->GetOrigin(i);
   }
 
+  const vnl_matrix<double> inverseDirectionCosines{ vnl_matrix_inverse<double>(dircosmatrix).as_matrix() };
+  origin *= inverseDirectionCosines; // transform to minc convention, need to apply before removing RAStoLPS
+
   if (this->m_ConvertCoordinatesToLPS == MINCIOEnums::MINCIOCoordinateFIX::MINCIOCoordinateRASToLPS)
     dircosmatrix *= RAS_tofrom_LPS;
-
-  const vnl_matrix<double> inverseDirectionCosines{ vnl_matrix_inverse<double>(dircosmatrix).as_matrix() };
-  origin *= inverseDirectionCosines; // transform to minc convention
 
   for (unsigned int i = 0; i < nDims; ++i)
   {

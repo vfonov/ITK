@@ -120,34 +120,51 @@ public:
     OutputPointType pnt;
 
     // works only for 3D->3D transforms
-    if(this->m_ConvertCoordinatesToLPS==MINCIOEnums::MINCIOCoordinateRASToLPS)
+    if (this->m_ConvertCoordinatesToLPS == MINCIOEnums::MINCIOCoordinateFIX::MINCIOCoordinateRASToLPS)
     {
-      pnt=transform_ras_to_lps(point);
-      general_transform_point((m_Invert ? &m_Xfm_inv : &m_Xfm), point[0], point[1], point[2], &pnt[0], &pnt[1], &pnt[2]);
-      pnt=transform_lps_to_ras(pnt);
-    } else {
-      general_transform_point((m_Invert ? &m_Xfm_inv : &m_Xfm), point[0], point[1], point[2], &pnt[0], &pnt[1], &pnt[2]);
+      pnt = transform_ras_to_lps(point);
+      general_transform_point(
+        (m_Invert ? &m_Xfm_inv : &m_Xfm), point[0], point[1], point[2], &pnt[0], &pnt[1], &pnt[2]);
+      pnt = transform_lps_to_ras(pnt);
+    }
+    else
+    {
+      general_transform_point(
+        (m_Invert ? &m_Xfm_inv : &m_Xfm), point[0], point[1], point[2], &pnt[0], &pnt[1], &pnt[2]);
     }
     return pnt;
   }
 
-  OutputPointType transform_ras_to_lps(const InputPointType & point) const override
+  OutputPointType
+  transform_ras_to_lps(const InputPointType & point) const
   {
-     //TODO
+    OutputPointType out;
+    out[0] = -point[0];
+    out[1] = -point[1];
+    out[2] = point[2];
+    return out;
   }
 
-  OutputPointType transform_lps_to_ras(const InputPointType & point) const override
+  OutputPointType
+  transform_lps_to_ras(const InputPointType & point) const
   {
-     //TODO
+    // inverse to itself
+    return transform_ras_to_lps(point);
   }
 
   //! use finate element difference to estimate local jacobian
   void
-  estimate_local_jacobian(const InputPointType & orig, vnl_matrix_fixed<double, 3, 3> & m)
+  estimate_local_jacobian(const InputPointType & orig_, vnl_matrix_fixed<double, 3, 3> & m)
   {
-    double       u1, v1, w1;
-    double       u2, v2, w2;
-    const double delta = 1e-4;
+    double         u1, v1, w1;
+    double         u2, v2, w2;
+    const double   delta = 1e-4;
+    InputPointType orig;
+
+    if (this->m_ConvertCoordinatesToLPS == MINCIOEnums::MINCIOCoordinateFIX::MINCIOCoordinateRASToLPS)
+      orig = transform_ras_to_lps(orig_);
+    else
+      orig = orig_;
 
     general_transform_point((m_Invert ? &m_Xfm_inv : &m_Xfm), orig[0] - delta, orig[1], orig[2], &u1, &v1, &w1);
     general_transform_point((m_Invert ? &m_Xfm_inv : &m_Xfm), orig[0] + delta, orig[1], orig[2], &u2, &v2, &w2);
@@ -166,6 +183,19 @@ public:
     m(2, 0) = (u2 - u1) / (2 * delta);
     m(2, 1) = (v2 - v1) / (2 * delta);
     m(2, 2) = (w2 - w1) / (2 * delta);
+
+
+    if (this->m_ConvertCoordinatesToLPS == MINCIOEnums::MINCIOCoordinateFIX::MINCIOCoordinateRASToLPS)
+    {
+      // need to invert sign for derivatives too
+      m(0, 0) *= -1;
+      m(0, 1) *= -1;
+      m(0, 2) *= -1;
+
+      m(1, 0) *= -1;
+      m(1, 1) *= -1;
+      m(1, 2) *= -1;
+    }
   }
 
   /**  Method to transform a vector. */
@@ -181,7 +211,7 @@ public:
   {
     itkExceptionMacro(<< "Not Implemented");
   }
-MINCIOEnums::MINCIOCoordinateFIX m_ConvertCoordinatesToLPS;
+
   /**  Method to transform a vector. */
   OutputVectorType
   TransformVector(const InputVectorType & vector) const override
@@ -302,8 +332,8 @@ MINCIOEnums::MINCIOCoordinateFIX m_ConvertCoordinatesToLPS;
   }
 
 protected:
-  MINCTransformAdapter():
-    m_ConvertCoordinatesToLPS(ITK_MINC_IO_COORDINATE_FIX_DEFAULT)
+  MINCTransformAdapter()
+    : m_ConvertCoordinatesToLPS(ITK_MINC_IO_COORDINATE_FIX_DEFAULT)
   {
     if (VInputDimension != 3 || VOutputDimension != 3)
       itkExceptionMacro(<< "Sorry, only 3D to 3d minc xfm transform is currently implemented");

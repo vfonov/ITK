@@ -30,15 +30,18 @@
 
 template <typename ImageType>
 int
-test_image_moments(const char * input_image,
-                   const char * output_image,
-                   double       total,
-                   double       mx,
-                   double       my,
-                   double       mz,
-                   double       epsilon)
+test_image_moments(
+  const char *                          input_image,
+  const char *                          output_image,
+  double                                total,
+  double                                mx,
+  double                                my,
+  double                                mz,
+  double                                epsilon,
+  itk::MINCIOEnums::MINCIOCoordinateFIX coord_fix = itk::MINCIOEnums::MINCIOCoordinateFIX::MINCIOCoordinateLegacy)
 {
-  // itk::MINCImageIO::Pointer mincIO1 = itk::MINCImageIO::New();
+  itk::MINCImageIO::Pointer mincIO1 = itk::MINCImageIO::New();
+  mincIO1->SetConvertCoordinatesToLPS(coord_fix);
 
   using ReaderType = itk::ImageFileReader<ImageType>;
 
@@ -50,7 +53,7 @@ test_image_moments(const char * input_image,
 
   auto calculator = MomentsCalculatorType::New();
 
-  // reader->SetImageIO( mincIO1 );
+  reader->SetImageIO(mincIO1);
 
   reader->SetFileName(input_image);
 
