@@ -29,6 +29,9 @@
 
 #include <memory> // For unique_ptr.
 
+#include "itkMINCImageIOConfigurePrivate.h"
+
+
 extern "C"
 {
   void
@@ -235,6 +238,7 @@ MINCImageIO::CloseVolume()
 
 MINCImageIO::MINCImageIO()
   : m_MINCPImpl(std::make_unique<MINCImageIOPImpl>())
+  , m_RAS_to_LPS(ITK_MINC_IO_RAS_TO_LPS)
 {
   for (auto & dimensionIndex : m_MINCPImpl->m_DimensionIndices)
   {
@@ -509,7 +513,8 @@ MINCImageIO::ReadImageInformation()
   }
 
   // Transform MINC RAS coordinates to internal ITK LPS Coordinates
-  dir_cos = RAS_tofrom_LPS * dir_cos;
+  if (this->m_RAS_to_LPS)
+    dir_cos = RAS_tofrom_LPS * dir_cos;
 
   // Transform origin coordinates
   o_origin = dir_cos * origin;
@@ -994,7 +999,8 @@ MINCImageIO::WriteImageInformation()
   origin *= inverseDirectionCosines; // transform to minc convention
 
   // Convert ITK direction cosines from LPS to RAS convention
-  dircosmatrix *= RAS_tofrom_LPS;
+  if (this->m_RAS_to_LPS)
+    dircosmatrix *= RAS_tofrom_LPS;
 
   for (unsigned int i = 0; i < nDims; ++i)
   {

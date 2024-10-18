@@ -112,7 +112,7 @@ compare_linear(const char * linear_transform)
 
       if ((v1 - v2).GetSquaredNorm() > tolerance)
       {
-        std::cout << "Original Pixel (" << v1 << ") doesn't match read-in Pixel (" << v2 << " ) "
+        std::cout << "Original Coordinate (" << v1 << ") doesn't match read-in Coordinate (" << v2 << " ) "
                   << " in " << linear_transform << " at " << pnt << std::endl;
         return EXIT_FAILURE;
       }
