@@ -287,6 +287,7 @@ MINCImageIO::PrintSelf(std::ostream & os, Indent indent) const
 
   os << indent << "MINCPImpl: " << m_MINCPImpl.get() << std::endl;
   os << indent << "DirectionCosines: " << m_DirectionCosines << std::endl;
+  os << indent << "RAS_to_LPS: " << m_RAS_to_LPS << std::endl;
 }
 
 void
@@ -689,6 +690,8 @@ MINCImageIO::ReadImageInformation()
   std::string classname(GetNameOfClass());
   //  EncapsulateMetaData<std::string>(thisDic,ITK_InputFilterName,
   // classname);
+  // preserve information if the volume was RAS to LPS converted
+  EncapsulateMetaData<bool>(thisDic, "RAS_to_LPS", m_RAS_to_LPS);
 
   // store history
   size_t minc_history_length = 0;
@@ -1030,27 +1033,21 @@ MINCImageIO::WriteImageInformation()
   {
     case IOComponentEnum::UCHAR:
       m_MINCPImpl->m_Volume_type = MI_TYPE_UBYTE;
-      // m_MINCPImpl->m_Volume_class=MI_CLASS_INT;
       break;
     case IOComponentEnum::CHAR:
       m_MINCPImpl->m_Volume_type = MI_TYPE_BYTE;
-      // m_MINCPImpl->m_Volume_class=MI_CLASS_INT;
       break;
     case IOComponentEnum::USHORT:
       m_MINCPImpl->m_Volume_type = MI_TYPE_USHORT;
-      // m_MINCPImpl->m_Volume_class=MI_CLASS_INT;
       break;
     case IOComponentEnum::SHORT:
       m_MINCPImpl->m_Volume_type = MI_TYPE_SHORT;
-      // m_MINCPImpl->m_Volume_class=MI_CLASS_INT;
       break;
     case IOComponentEnum::UINT:
       m_MINCPImpl->m_Volume_type = MI_TYPE_UINT;
-      // m_MINCPImpl->m_Volume_class=MI_CLASS_INT;
       break;
     case IOComponentEnum::INT:
       m_MINCPImpl->m_Volume_type = MI_TYPE_INT;
-      // m_MINCPImpl->m_Volume_class=MI_CLASS_INT;
       break;
       //     case IOComponentEnum::ULONG://TODO: make sure we are cross-platform here!
       //       volume_data_type=MI_TYPE_ULONG;
@@ -1058,10 +1055,10 @@ MINCImageIO::WriteImageInformation()
       //     case IOComponentEnum::LONG://TODO: make sure we are cross-platform here!
       //       volume_data_type=MI_TYPE_LONG;
       //       break;
-    case IOComponentEnum::FLOAT: // TODO: make sure we are cross-platform here!
+    case IOComponentEnum::FLOAT:
       m_MINCPImpl->m_Volume_type = MI_TYPE_FLOAT;
       break;
-    case IOComponentEnum::DOUBLE: // TODO: make sure we are cross-platform here!
+    case IOComponentEnum::DOUBLE:
       m_MINCPImpl->m_Volume_type = MI_TYPE_DOUBLE;
       break;
     default:
@@ -1101,7 +1098,6 @@ MINCImageIO::WriteImageInformation()
   if (ExposeMetaData<std::string>(thisDic, "dimension_order", dimension_order))
   {
     // the format should be ((+|-)(X|Y|Z|V|T))*
-    // std::cout<<"Restoring original dimension order:"<<dimension_order.c_str()<<std::endl;
     if (dimension_order.length() == (minc_dimensions * 2))
     {
       dimorder_good = true;
@@ -1338,6 +1334,13 @@ MINCImageIO::WriteImageInformation()
       // TODO: figure out what to do with it
     }
   }
+
+  // preserve information of ITK RAS to MINC LPS conversion
+  {
+    int tmp = (int)this->m_RAS_to_LPS;
+    miset_attr_values(m_MINCPImpl->m_Volume, MI_TYPE_INT, "itk", "RAS_to_LPS", 1, &tmp);
+  }
+
   mifree_volume_props(hprops);
 }
 

@@ -42,7 +42,9 @@ itk_add_test(
   ${ITK_TEST_OUTPUT_DIR}/t1_z+_byte_cor_2.mnc
   itkMINCImageIOTest4
   DATA{Input/t1_z+_byte_cor.mnc}
-  ${ITK_TEST_OUTPUT_DIR}/t1_z+_byte_cor_2.mnc)
+  ${ITK_TEST_OUTPUT_DIR}/t1_z+_byte_cor_2.mnc
+  0
+  )
 
 itk_add_test(
   NAME
@@ -54,7 +56,9 @@ itk_add_test(
   ${ITK_TEST_OUTPUT_DIR}/HeadMRVolume.mnc
   itkMINCImageIOTest4
   DATA{${ITK_DATA_ROOT}/Input/HeadMRVolume.mhd,HeadMRVolume.raw}
-  ${ITK_TEST_OUTPUT_DIR}/HeadMRVolume.mnc)
+  ${ITK_TEST_OUTPUT_DIR}/HeadMRVolume.mnc
+  0
+  )
 
 # Test to make sure that inter-slice normalization was properly dealt with
 itk_add_test(
@@ -67,7 +71,8 @@ itk_add_test(
   ${ITK_TEST_OUTPUT_DIR}/t1_z+_ubyte_yxz_nonorm_noParams.mnc
   itkMINCImageIOTest4
   DATA{Input/t1_z+_ubyte_yxz_nonorm.mnc}
-  ${ITK_TEST_OUTPUT_DIR}/t1_z+_ubyte_yxz_nonorm_noParams.mnc)
+  ${ITK_TEST_OUTPUT_DIR}/t1_z+_ubyte_yxz_nonorm_noParams.mnc
+  0)
 
 itk_add_test(
   NAME
@@ -79,7 +84,8 @@ itk_add_test(
   ${ITK_TEST_OUTPUT_DIR}/t1_z+_float_yxz_nonorm_noParams.mnc
   itkMINCImageIOTest4
   DATA{Input/t1_z+_float_yxz_nonorm.mnc}
-  ${ITK_TEST_OUTPUT_DIR}/t1_z+_float_yxz_nonorm_noParams.mnc)
+  ${ITK_TEST_OUTPUT_DIR}/t1_z+_float_yxz_nonorm_noParams.mnc
+  0)
 
 itk_add_test(
   NAME
@@ -130,6 +136,7 @@ itk_add_test(
   itkMINCImageIOTest4
   DATA{Input/t1_z+_float_yxz_nonorm.mnc}
   ${ITK_TEST_OUTPUT_DIR}/t1_z+_float_yxz_nonorm.mnc
+  0 # RAStoLPS
   427621.7839
   -8.195741583
   72.45998819
@@ -146,6 +153,7 @@ itk_add_test(
   itkMINCImageIOTest4
   DATA{Input/t1_z+_float_yxz_norm.mnc}
   ${ITK_TEST_OUTPUT_DIR}/t1_z+_float_yxz_norm.mnc
+  0 # RAStoLPS
   427621.7839
   -8.195741583
   72.45998819
@@ -162,6 +170,7 @@ itk_add_test(
   itkMINCImageIOTest4
   DATA{Input/t1_z+_ubyte_yxz_nonorm.mnc}
   ${ITK_TEST_OUTPUT_DIR}/t1_z+_ubyte_yxz_nonorm.mnc
+  0 # RAStoLPS
   427621.7838
   -8.195741583
   72.45998819
@@ -186,6 +195,7 @@ foreach(type byte;short;ubyte)
         itkMINCImageIOTest4
         DATA{Input/${imageName}.mnc}
         ${outImage}
+        0 # RAStoLPS
         427620.3115
         -8.195582241
         72.46002233
@@ -211,6 +221,7 @@ foreach(type double;float;long;ulong)
         itkMINCImageIOTest4
         DATA{Input/${imageName}.mnc}
         ${outImage}
+        0 # RAStoLPS
         427590.7631
         -8.195995507
         72.45943584
@@ -236,6 +247,7 @@ foreach(type ushort)
         itkMINCImageIOTest4
         DATA{Input/${imageName}.mnc}
         ${outImage}
+        0 # RAStoLPS
         427590.7957
         -8.195997123
         72.45943721
