@@ -29,6 +29,8 @@
 #include "itkStdStreamStateSave.h"
 #include "itkTestingMacros.h"
 
+#include "itkMINCImageIOConfigurePrivate.h"
+
 template <typename ImageType>
 int
 test_image_moments(const char * input_image,
@@ -40,6 +42,12 @@ test_image_moments(const char * input_image,
                    double       epsilon,
                    bool         ras_to_lps)
 {
+  if (ras_to_lps)
+  { // need to flip expected moments to match flipped coordinate system
+    mx = -mx;
+    my = -my;
+  }
+
   itk::MINCImageIO::Pointer mincIO1 = itk::MINCImageIO::New();
   mincIO1->SetRAS_to_LPS(ras_to_lps);
 
@@ -94,6 +102,8 @@ test_image_moments(const char * input_image,
   {
     auto writer = WriterType::New();
     writer->SetFileName(output_image);
+    // writer should use default RAS to LPS flag, to satisfy comparison after
+    mincIO1->SetRAS_to_LPS(ras_to_lps);
     if (itksys::SystemTools::StringEndsWith(output_image, ".mnc")) // HACK to enable use .mhd files
       writer->SetImageIO(mincIO1);
 
@@ -122,7 +132,8 @@ itkMINCImageIOTest4(int argc, char * argv[])
 
   const char * input = argv[1];
   const char * output = argv[2];
-  bool         ras_to_lps = strcmp(argv[3], "1") == 0;
+  int          ras_to_lps_test = atoi(argv[3]);
+  bool         ras_to_lps = ras_to_lps_test < 0 ? ITK_MINC_IO_RAS_TO_LPS : ras_to_lps_test == 1;
 
   double total = 0.0;
   double mx = 0.0;
@@ -135,10 +146,10 @@ itkMINCImageIOTest4(int argc, char * argv[])
   {
     if (argc == 8)
     {
-      total = std::stod(argv[3]);
-      mx = std::stod(argv[4]);
-      my = std::stod(argv[5]);
-      mz = std::stod(argv[6]);
+      total = std::stod(argv[4]);
+      mx = std::stod(argv[5]);
+      my = std::stod(argv[6]);
+      mz = std::stod(argv[7]);
     }
     else
     {
